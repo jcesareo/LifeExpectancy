@@ -12,15 +12,14 @@ Tested on python 2.7.10
 
 The program needs the following information to provide a user's life expectancy:
 
-Name: *user*
-Country: *country*
-Date of Birth: *dob*
-Gender: *male*
+Name: 
+Country: 
+Date of Birth: 
+Gender:
 
-And will provide output in the format:
+And provides output in the format of a sentence:
 
-*user*'s life expectancy is: *years* years, *months* months, *weeks* weeks, *days* days
-
+XXXX's life expectancy is: YYYY years, MM months, W weeks, D days
 
 Example:
 
@@ -35,7 +34,7 @@ WPA provides 2 APIs to calculate a person's life expectancy:
 - the /remaining/ calculates a person's remaining life expectancy. The API needs the user to specify a country, gender, age and reference date. It always returns a positive float representing the number of years a person with that age has left to live.
 - the /total/ API estimates a person's life expectancy based on country, gender and date of birth. It returns a float value of the number of years a person's life is going to be. It is an estimated value which is less accurate than the /remaining/ API.
 
-I have chosen to use the /remaining/ API if the user inputs a date of birth that is in the past, the /total/ API if the user inputs a date of birth that is in the future.
+I have chosen to use the /remaining/ API if the user inputs a date of birth that is in the past because it provide the most accurate life expectancy for a person'age, the /total/ API if the user inputs a date of birth that is in the future because it does not need to handle the user's age.
 
 *** MAJOR APP COMPONENTS ***
 
@@ -49,7 +48,7 @@ The workflow for each request is the following:
 
 - get user input through lifeExpectancyInput(), if the input is invalid an error message is delivered to the user
 - check validity of the country by looking at the cached list of countries. This is done to avoid querying the WPA if the country is invalid.
-- check cache to see if an identical life expectancy has been queried recently ( i.e. within the last 10 requests ). If so the life expectancy is returned
+- check cache to see if an identical life expectancy has been queried recently ( i.e. within the last 10 unique requests ). If so the life expectancy is returned
 - check the data storage to see if an identical life expectancy has been already queried. If so, the life expectancy is returned
 - finally, if the life expectancy has not been queried previously, query the WPA ( either the /remaining/ or /total/ API based on the date of birth ) , calculate the life expectancy, return and cache the result.
 
@@ -80,12 +79,12 @@ There are 2 methods to interact with the data store:
 
 Notes on data store:
 I have included the reference date as part of the path because this information plays a role when retrieving the life expectancy from the /remaining/ WPA API.
-Since my app does not allow to query for different reference dates and only uses {today} as the reference date, queries made in previous days could be cleaned up as they will not be used again.
+Since my app does not allow queries for different reference dates and only uses {today} as the reference date, queries made for previous days could be cleaned up as they will not be used again.
 If the system were to be put in production, I believe a mechanism to cleanup old queries has to be put in place. It could be either triggered by a check in the addLifeExpectancy() routine, or the LEDataStore could provide a routine that is run by the frontend itself to clean up stale requests.
 
 4. LEUtils.py
 
-LEUtils holds the LifeExpectancy class which is the abstraction used to represent life expectancies. There are a few other helper classes such as Person, Age which are mostly used to keep the code clean and one helper method isDate() to verify a string correctly represents a date in isoformat.
+LEUtils holds the LifeExpectancy class which is the abstraction used to represent life expectancies. There are a few other helper classes such as Person and Age, which are mostly used to keep the code clean and one helper method isDate() to verify a string correctly represents a date in isoformat.
 
 
 MISC:
