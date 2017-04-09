@@ -69,7 +69,7 @@ class LEDataStorage( object ):
       # if life expectancy isnt set in lifeExp,
       # do not store anything
       if not lifeExp.lifeExpectancy():
-         raise LEDataStorageException( "life expectancy in %s is not set" )
+         raise LEDataStorageException( "life expectancy in %s is not set" % lifeExp )
 
       lifeExpPath = self._lifeExpPath( lifeExp )
       if not os.path.exists( lifeExpPath ):
