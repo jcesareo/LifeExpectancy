@@ -26,121 +26,136 @@ def isDate( d ):
 
    return ( True, d )
 
+
+class Person( object ):
+   def __init__( self, name, lifeExp ):
+      self.name_ = name
+      self.lifeExp_ = lifeExp
+
+   def name( self ):
+      return self.name_
    
+   def lifeExp( self ):
+      return self.lifeExp_
+
+class Age( object ):
+   def __init__( self, years, months, days ):
+      self.y_ = years if years > 0 else 0
+      self.m_ = months if months > 0 else 0
+      self.d_ = days if days > 0 else 0
+
+   def json( self ):
+      return { 'years' : self.y_,
+               'months': self.m_,
+               'days': self.d_ }
+
+   def years( self ):
+      return self.y_
+   def months( self ):
+      return self.m_
+   def days( self ):
+      return self.d_
+
+   def zero( self ):
+      return ( self.y_ == 0 and self.m_ == 0 and self.d_ == 0 )
+   def __str__( self ):
+      return "%sy%sm%sd" % ( self.y_, self.m_, self.d_ )
+
+   def __eq__( self, o ):
+      if not isinstance( o, self.__class_ ):
+         return False
+      return ( o.years() == self.years_ and o.months() == self.months_
+               and o.days() == self.days_ )
+
 class LifeExpectancy( object ):
 
-   def __init__( self, country, dob, sex ):
-
+   def __init__( self, country, dob, gender, date=None ):
       # country is just a string, no verificaiton
       if not isinstance( country, str ):
          raise LifeExpectancyException( "country has to be a string" )
 
       self.country_ = country
-      ( v, date ) = isDate( dob )
-      
+      ( v, dob ) = isDate( dob )
       if not v:
-         raise LifeExpectancyException( date )
-      self.dob_ = date
+         raise LifeExpectancyException( dob )
+      self.dob_ = dob
+      if not isinstance( gender, str ):
+         raise LifeExpectancyException( "gender has to be a string of value 'male|female'' " )
+      gender = gender.lower()
+      if gender not in [ 'male', 'female' ]:
+         raise LifeExpectancyException( "gender has to be male or female " )
+      self.gender_ = gender
+      self.lifeExp_ = None
+      if date:
+         self.setDate( date )
 
-      if not isinstance( sex, str ):
-         raise LifeExpectancyException( "sex has to be the string 'male|female' " )
-      sex = sex.lower()
-      if sex not in [ 'male', 'female' ]:
-         raise LifeExpectancyException( "sex has to be 'male|female' " )
-      self.sex_ = sex
-      # date of death, calculated when lifeExp is retrieved
-      self.dod_ = None
-      
+
    def country( self ):
       return self.country_
 
    def dob( self ):
       return self.dob_
 
-   def sex( self ):
-      return self.sex_
+   def gender( self ):
+      return self.gender_
 
-   def dod( self ):
-      return self.dod_
+   def setDate( self, date ):
+      if self.lifeExp_:
+         raise LifeExpectancyException( "Changing date when "
+            "life expectancy has already been calculated isn't allowed" )
 
-   def setExpectedDod( self, lifeExp ):
-      '''
-      Calculates the expected date of death
-      based on lifeExp, a float of the number of years
-      expected for a person with these life expectancy traits
-      '''
-      # calculate roughly how many daysare expected
-      lifeExpDays = int( lifeExp * 365.25 )
-      lifeDelta = relativedelta()
-      lifeDelta.days = lifeExpDays
-      self.dod_ = self.dob_ + lifeDelta
-
-   def setDod( self, dod ):
-      '''
-      Set date of death for lifeExpectancy directly
-      '''
-
-      ( v, date ) = isDate( dod )
+      ( v, date ) = isDate( date )
       if not v:
          raise LifeExpectancyException( date )
-      self.dod_ = date
+      self.date_ = date
+      delta = relativedelta( self.date_, self.dob_ )
+      self.age_ = Age( delta.years, delta.months, delta.days )
       
-   def lifeExpectancy( self ):
+   def date( self ):
+      return self.date_
+
+   def age( self ):
+      return self.age_
+
+   def calculateLifeExp( self, lifeExp ):
       '''
-      Returns the relative delta
-      between today's date and the date of death
+      Calculates the expected life exepctancy
+      based on lifeExp, a float of the number of years
+      expected for a person to live based on her age at a certain date
+      lifeExp_ is a relativedelta
       '''
 
-      if not self.dod_:
-         # can't calculate the life expectancy if we don't know date of death
-         return None
-      today = datetime.date.today()
-      return relativedelta( self.dod_, today )
+      dod = self.date_ + relativedelta( days=( lifeExp * 365.25 ) )
+      # do this so that we have days, months, and years
+      self.lifeExp_ = relativedelta( dod, self.date_ )
+
+   def setLifeExp( self, delta ):
+      self.lifeExp_ = delta
+      
+   def lifeExpectancy( self ):
+      return self.lifeExp_
+
+   def lifeExpectancyJson( self ):
+
+      return { 'years': self.lifeExp_.years,
+               'months': self.lifeExp_.months,
+               'days': self.lifeExp_.days }
 
    def __eq__( self, other ):
       '''
-      Two life expectancies are the same if the country, dob and sex is the same
+      Two life expectancies are the same if the country, dob and gender is the same
       '''
 
       if not isinstance( other, self.__class__ ):
          return False
       return ( other.country() == self.country_ and other.dob() == self.dob_
-               and other.sex() == self.sex() )
+               and other.gender() == self.gender() and self.date() == other.date() )
 
 
    def __str__( self ):
-      return ( "country: %s, dob: %s, sex: %s" %
+      return ( "country: %s, dob: %s, gender: %s, date: %s" %
                ( self.country_, self.dob_.isoformat(),
-                 self.sex_ ) )
+                 self.gender_, self.date_ ) )
 
 
-class LECache( object ):
 
-   def __init__( self, maxsize ):
-      self.maxsize_ = maxsize
-      self.cache_ = [ None ] * maxsize
-
-   def put( self, lifeExpectancy ):
-      if lifeExpectancy in self.cache_:
-         self.cache_.remove( lifeExpectancy )
-      # add the lifeExpectancy to front of the list
-      self.cache_.insert( 0, lifeExpectancy )
-      # if the length of the cache exceeds the max size
-      # remove the last lifeExpectancy
-      if len( self.cache_ ) > self.maxsize_:
-         self.cache_.pop()
-
-   def get( self, lifeExpectancy ):
-      '''
-      Returns the cached value if
-      there is one equal to lifeExpectancy,
-      None otherwise
-      '''
-      result = None
-      for le in self.cache_:
-         if lifeExpectancy == le:
-            result = le
-            # update the priority on the result
-            self.put( result )
-            break
-      return result

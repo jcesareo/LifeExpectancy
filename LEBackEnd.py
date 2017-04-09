@@ -2,6 +2,8 @@
 import os
 from LEUtils import isDate
 import tempfile
+import json
+from dateutil.relativedelta import relativedelta as relativedelta
 
 class LEDataStorageException( Exception ):
    pass
@@ -13,26 +15,19 @@ class LEDataStorage( object ):
    Each year has a subfolder in rootdir/country/
    Each month has a folder in folder in rootdir/country/year/
    Each day has a folder in folder rootdir/country/year/month/
-   Each sex has a file in folder rootdir/country/year/month/day/
+   Each gender has a file in folder rootdir/country/year/month/day/
    The file has the life expectancy float number
    '''
 
-   def __init__( self, root=tempfile.gettempdir(), directory='lifeExpectancy',
-                 countries=list() ):
+   def __init__( self, root=tempfile.gettempdir(), directory='lifeExpectancy' ):
 
       if not os.path.exists( root ):
          raise LEDataStorageException( "Directory %s does not exist, "
             " pick an existing root directory" )
       self.root_ = os.path.abspath( root )
-      self.dir_ = ( root + directory ) 
+      self.dir_ = os.path.join( root, directory ) 
       if not os.path.exists( self.dir_ ):
          os.mkdir( self.dir_ )
-
-      for country in countries:
-         countryPath = os.path.join( self.dir_, country )
-         if not os.path.exists( countryPath ):
-            os.mkdir( countryPath )
-
 
    def root( self ):
       return self.root_
@@ -40,49 +35,48 @@ class LEDataStorage( object ):
    def directory( self ):
       return self.dir_
 
-   def fetchLifeExpectancy( self, lifeExpectancy ):
+
+   def _lifeExpPath( self, lifeExp ):
+
+      dateDir = "%s/%s/%s" % ( lifeExp.date().year,
+                               lifeExp.date().month,
+                               lifeExp.date().day )
+      dob = lifeExp.dob()
+      dobDir = "%s/%s/%s/%s" % ( lifeExp.country(), dob.year, dob.month,
+                                 dob.day )
+
+      datePath = os.path.join( self.dir_, dateDir )
+      lifeExpPath = os.path.join( datePath, dobDir )
+
+      return lifeExpPath
+      
+   def fetchLifeExpectancy( self, lifeExp ):
       '''
-      Given a life expectancy object, use the country, dob, and sex
+      Given a life expectancy object, use the country, dob, and gender
       to retrieve the dod
       '''
-      lifeExpPath = "%s/%s/%s/%s/%s" % ( lifeExpectancy.country(),
-                                         lifeExpectancy.dob().year,
-                                         lifeExpectancy.dob().month,
-                                         lifeExpectancy.dob().day,
-                                         lifeExpectancy.sex() )
 
-
-      lifeExpFile = os.path.join( self.dir_, lifeExpPath )
+      lifeExpFile = os.path.join( self._lifeExpPath( lifeExp ), lifeExp.gender() )
       if not os.path.exists( lifeExpFile ):
          return None
 
-      with open( lifeExpFile, 'r' ) as fd:         
-         ( v, dod ) = isDate( fd.read().strip() )
-         if not v:
-            return None
-      return dod
+      with open( lifeExpFile, 'r' ) as fd:
+         lifeExpJson = json.load( fd )
+         return relativedelta( **lifeExpJson )
       
-   def setLifeExpectancy( self, lifeExpectancy ):
+   def addLifeExpectancy( self, lifeExp ):
 
-      # if the dod is not seath for this lifeExpectancy then do not add
-      # to the storage
-      if not lifeExpectancy.dod():
-         raise LEDataStorageException( "life expectancy %s doesn't have a dod set, "
-                                       "can't add to data storage" )
-      
-      lifeExpDir = "%s/%s/%s/%s" % ( lifeExpectancy.country(),
-                                     lifeExpectancy.dob().year,
-                                     lifeExpectancy.dob().month,
-                                     lifeExpectancy.dob().day )
+      # if life expectancy isnt set in lifeExp,
+      # do not store anything
+      if not lifeExp.lifeExpectancy():
+         raise LEDataStorageException( "life expectancy in %s is not set" )
 
-      lifeExpPath = os.path.join( self.dir_, lifeExpDir )
-      
+      lifeExpPath = self._lifeExpPath( lifeExp )
       if not os.path.exists( lifeExpPath ):
          os.makedirs( lifeExpPath )
 
-      lifeExpFile = os.path.join( lifeExpPath, lifeExpectancy.sex() )
+      lifeExpFile = os.path.join( lifeExpPath, lifeExp.gender() )
       if not os.path.exists( lifeExpFile ):
          with open( lifeExpFile, 'w' ) as fd:
-            fd.write( lifeExpectancy.dod().isoformat() )
-      
+            json.dump( lifeExp.lifeExpectancyJson(), fd )
 
