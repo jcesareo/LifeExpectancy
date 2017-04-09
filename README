@@ -24,13 +24,9 @@ The main method is lifeExpectancy() which handles the flow of the app. Before a 
 The workflow for each request is the following:
 
 - get user input through lifeExpectancyInput(), if the input is incorrect an error message is delivered to the user who is also prompted to exit
-
 - check validity of the country by looking at the cached list of countries. This is done to avoid querying the WPA if the country is invalid.
-
 - check cache to see if an identical life expectancy has been queried recently ( i.e. within the last 10 requests ). If so the life expectancy is returned
-
 - check the backend ( i.e. data storage ) to see if an identical life expectancy has been already queried. If so, the life expectancy is returned
-
 - finally, if the life expectancy hasnt been queried before, query the WPA and calculate the life expectancy.
 
 
@@ -44,6 +40,7 @@ This backend mechanism keeps the file size very small and, more importantly, all
 
 
 There are 2 methods to interact with the data store:
+
 - fetchLifeExpectancy: returns a dateutil.relativedelta.relativedelta object if the life expectancy exists, None otherwise
 - addLifeExpectancy: creates the life expectancy path described above if it doesnt exist and then adds a file based on the gender which contains the life expectancy information.
 
