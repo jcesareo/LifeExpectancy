@@ -3,6 +3,13 @@ Life Expectancy App
 ********************
 
 This is a simple Life Expectancy app that uses the World Population APIs ( WPA ) found at http://api.population.io/ to calculate the life expectancy of a user.
+
+
+Configure: make
+Usage: python LifeExpectancy/LifeExpectancy.py
+Tests: python setup.py test
+Tested on python 2.7.10
+
 The program needs the following information to provide a user's life expectancy:
 
 Name: *user*
@@ -10,68 +17,82 @@ Country: *country*
 Date of Birth: *dob*
 Gender: *male*
 
+And will provide output in the format:
+
 *user*'s life expectancy is: *years* years, *months* months, *weeks* weeks, *days* days
 
-Below is a description of the major components in the app
 
+Example:
+
+Name: Jacopo
+Country: Italy
+Date of Birth: (YYYY-MM-DD) 1987-03-28
+Gender: (Male|Female) Male
+Jacopo's life expectancy is: 57 years, 6 months, 2 weeks and 3 days
+
+
+WPA provides 2 APIs to calculate a person's life expectancy:
+- the /remaining/ calculates a person's remaining life expectancy. The API needs the user to specify a country, gender, age and reference date. It always returns a positive float representing the number of years a person with that age has left to live.
+- the /total/ API estimates a person's life expectancy based on country, gender and date of birth. It returns a float value of the number of years a person's life is going to be. It is an estimated value which is less accurate than the /remaining/ API.
+
+I have chosen to use the /remaining/ API if the user inputs a date of birth that is in the past, the /total/ API if the user inputs a date of birth that is in the future.
+
+*** MAJOR APP COMPONENTS ***
 
 1. LifeExpectancy.py
 
 LifeExpectancy works as the frontend of the app.
 
-The main method is lifeExpectancy() which handles the flow of the app. Before a while True: loop that allows the user to make multiple life expectancy requests, the app initializes the cache ( see LECache.py ) and the data storage ( see LEBackEnd.py ) as well as caching the list of valid countries from WPA.
+The main method is lifeExpectancy() which handles the flow of the app. This method initializes the cache ( see LECache.py ) and the data storage ( see LEDataStore.py ), caches the list of valid countries from WPA, and then allows the user to make life expectancy requests.
 
 The workflow for each request is the following:
 
-- get user input through lifeExpectancyInput(), if the input is incorrect an error message is delivered to the user who is also prompted to exit
+- get user input through lifeExpectancyInput(), if the input is invalid an error message is delivered to the user
 - check validity of the country by looking at the cached list of countries. This is done to avoid querying the WPA if the country is invalid.
 - check cache to see if an identical life expectancy has been queried recently ( i.e. within the last 10 requests ). If so the life expectancy is returned
-- check the backend ( i.e. data storage ) to see if an identical life expectancy has been already queried. If so, the life expectancy is returned
-- finally, if the life expectancy hasnt been queried before, query the WPA and calculate the life expectancy.
+- check the data storage to see if an identical life expectancy has been already queried. If so, the life expectancy is returned
+- finally, if the life expectancy has not been queried previously, query the WPA ( either the /remaining/ or /total/ API based on the date of birth ) , calculate the life expectancy, return and cache the result.
 
-
-2. LEBackEnd.py
-
-LEBackEnd contains the implementation of the data storage mechanism, the "backend". The constraint is that disk access is expensive ( but I have assumed disk consumption isn't ) and as such I generate a complex hierarchy of directories to store small life expectancies. For each life expectancy, three pieces of information make up the path to its file: date, dob, country.
-
-The life expectancy path is: rootdir/date.year/date.month/date.day/country/dob.year/dob.month/dob.day/. In this directory 2 files ( one per gender ) can be stored. The files contain a dateutil.relativedelta.relativedelta object in JSON format. To figure out why such a complex mechanism is used for storing queries, see the Notes section.
-
-This backend mechanism keeps the file size very small and, more importantly, allows to query for a certain life expectancy without doing any disk accesses if the life expectancy isnt present. If present, the disk access loads a very small file which should be less expensive than opening larger files.
-
-
-There are 2 methods to interact with the data store:
-
-- fetchLifeExpectancy: returns a dateutil.relativedelta.relativedelta object if the life expectancy exists, None otherwise
-- addLifeExpectancy: creates the life expectancy path described above if it doesnt exist and then adds a file based on the gender which contains the life expectancy information.
-
-3. LECache.py
+2. LECache.py
 
 LECache contains the implementation of a LRU cache for life expectancies. The cache is implemented simply with a list that contains the last 10 LifeExpectancy objects.
 
 There are 2 methods to interact with the cache:
-- put: takes a LifeExpectancy object. If the object is in the cache, it removes it from the cache and then adds it to the front of the list to signify that it's the latest object retrived. When the size of the cache exceeds maxsize, the element at the end of the list ( used the furthest time back ) is removed.
-- get: returns a LifeExpectancy if an identical object is in the cache. If so, put( object ) is also called to signify that it has become the most recently used object.
+- put: takes a LifeExpectancy object. If the object is in the cache, it removes it from the cache and then adds it to the front of the list to signify that it's the object most recently retrieved. When the size of the cache exceeds maxsize ( 10 ), the element at the end of the list ( the oldest ) is removed.
+- get: takes a LifeExpectancy object. returns a LifeExpectancy if an identical object is in the cache, or None otherwise. If the object exists in the cache, put( object ) is also called to signify that it has become the most recently used object. 
+
+Note on tradeoff of this implementation versus using a dictionary: This implementation requires get() to linearly scan the entire list. This could be improved by keeping a dictionary of objects. However, the optimization to get an object from the cache in constant time did not seem worth the tradeoff of increasing the complexity of determining which object has been used more and less recently, given that we know the size of the cache is fixed at a very small value. This solution seems in line with the usage guidelines of cheap memory access and fixed cache size.
 
 
-Note that this implementation is not very efficient. The get function linearly scans the entire list ( could be improved with a hash ) while the put function removes an element from a list ( in python it probably creates 2 sub lists which then get stiched back together ) and inserts it at the front of the list ( another complex operation in python ). Both operations could be improved by implementing the cache through a linked list.
+3. LEDataStore.py
 
+LEDataStore contains the implementation of the data storage mechanism. The constraint is that disk access is expensive ( but I have assumed disk consumption isn't ) and as such I generate a complex hierarchy of directories to store small life expectancies. 
 
+The LEDataStore has a root directory which is the base of the hierarchy for stored life expectancies. I have used python's tempfile.gettempdir() to make sure that the app would work on different platforms.
+
+For each life expectancy, three pieces of information make up the path to its file: date, dob, country. The life expectancy directory structure is: {root-directory}/date.year/date.month/date.day/country/dob.year/dob.month/dob.day/. In this directory two files ( one per gender ) can be stored. The files contain a dateutil.relativedelta.relativedelta object in JSON format. 
+
+This mechanism keeps the file size very small and, more importantly, prevents performing any disk accesses if the life expectancy for a query isn't present. If present, the disk access is for a very small file.
+
+There are 2 methods to interact with the data store:
+- fetchLifeExpectancy: returns a dateutil.relativedelta.relativedelta object if the life expectancy exists, None otherwise
+- addLifeExpectancy: creates the life expectancy path described above if it doesnt exist and then adds a file based on the gender which contains the life expectancy information.
+
+Notes on data store:
+I have included the reference date as part of the path because this information plays a role when retrieving the life expectancy from the /remaining/ WPA API.
+Since my app does not allow to query for different reference dates and only uses {today} as the reference date, queries made in previous days could be cleaned up as they will not be used again.
+If the system were to be put in production, I believe a mechanism to cleanup old queries has to be put in place. It could be either triggered by a check in the addLifeExpectancy() routine, or the LEDataStore could provide a routine that is run by the frontend itself to clean up stale requests.
 
 4. LEUtils.py
 
-LEUtils has the LifeExpectancy class which is the abstraction used to represent life expectancies.
+LEUtils holds the LifeExpectancy class which is the abstraction used to represent life expectancies. There are a few other helper classes such as Person, Age which are mostly used to keep the code clean and one helper method isDate() to verify a string correctly represents a date in isoformat.
 
 
-Notes:
+MISC:
+- The API lists 'unisex' as a supported gender but trying to use 'unisex' in a request returns an error from the API:
 
-- Why is such a complex mechanism used to store life expectancies in our local data store? Why can't we deduce the life expectancy solely based on a person's country/dob/gender but instead we factor in the date of the query as well?
+{
+  "detail": "unisex is an invalid value for the parameter \"sex\", valid values are: male, female, unisex"
+}
 
-Honestly this was not intuitive to me either. In my first prototype I only used the /total/ life expectancy API but figured out pretty quickly that it returned different results from the /remaining/ life expectancy API.
-
-The /total/ one needs a dob/country/gender to return a life expectancy. But if we use calculate the 'expected date of death' from the first API call, and use the expected date of death in the /remaining/ API call as our date, we don't get a life expectancy of zero. In other words, if a person's life expectancy is 80 years and the we try use the /remaining/ APi to calculate the life expectancy the date the person is 80 years old and 1 day, her life expectancy is not negative, but a positive number.
-
-For this reason the choice was made in the data storage to include the date when the query was made.
-
-- 'Unisex' gender appears in the error message when an invalid gender is in the request saying the API supports 'Unisex', but using 'Unisex' as the gender in a request still returns an error.
-
-Since 'Unisex' doesn't seem to be supported in the API, I haven't included it as part of the genders that can be in LifeExpectancy.
+Since 'unisex' does not actually seem to be supported in the API, I have restricted the genders to be male or female in the LifeExpectancy abstraction.
