@@ -7,7 +7,7 @@ import datetime
 import context
 from LifeExpectancy.LEUtils import LifeExpectancy, LifeExpectancyException
 from LifeExpectancy.LECache import LECache
-from LifeExpectancy.LEBackEnd import LEDataStorage, LEDataStorageException
+from LifeExpectancy.LEDataStore import LEDataStore, LEDataStoreException
 
 import datetime
 from dateutil.relativedelta import relativedelta as relativedelta
@@ -150,7 +150,7 @@ class LECacheUnitTest( unittest.TestCase ):
       self.assertEqual( cache.cache_[ -1 ], self.les[ 2 ] )
 
 
-class LEDataStorageUnitTest( unittest.TestCase ):
+class LEDataStoreUnitTest( unittest.TestCase ):
 
    @classmethod
    def setUpClass( cls ):
@@ -164,21 +164,21 @@ class LEDataStorageUnitTest( unittest.TestCase ):
    def tearDownClass( cls ):
       shutil.rmtree( cls.rootDir_ )
 
-   def testLEDataStorageInit( self ):
+   def testLEDataStoreInit( self ):
       '''
-      Test __init__ method for LEDataStorage.
+      Test __init__ method for LEDataStore.
       '''
 
-      ds = LEDataStorage( root=self.rootDir_, directory=self.dir_ )
+      ds = LEDataStore( root=self.rootDir_, directory=self.dir_ )
       # check that rootDir_ + dirName exists
       self.assertTrue( os.path.exists( ds.directory() ) )
 
-   def testLEDataStorageLifeExpectancy( self ):
+   def testLEDataStoreLifeExpectancy( self ):
       '''
       Test fetch and set lifeExpectancy methods
       '''
 
-      ds = LEDataStorage( root=self.rootDir_, directory=self.dir_ )
+      ds = LEDataStore( root=self.rootDir_, directory=self.dir_ )
 
       lifeExp = 80.123
       self.le1_.calculateLifeExp( lifeExp  )
@@ -190,7 +190,7 @@ class LEDataStorageUnitTest( unittest.TestCase ):
       self.assertEqual( ds.fetchLifeExpectancy( self.le2_ ), None )
       # now check that a lifeExp is not added if dod isnt set
 
-      with self.assertRaisesRegexp( LEDataStorageException,
+      with self.assertRaisesRegexp( LEDataStoreException,
                                     "life expectancy.*is not set" ):
          ds.addLifeExpectancy( self.le2_ )
 
@@ -202,7 +202,7 @@ class LEDataStorageUnitTest( unittest.TestCase ):
 
       # make sure that if we stat a new data storage with the same
       # directory fetching works
-      ds2 = LEDataStorage( root=self.rootDir_, directory=self.dir_ )
+      ds2 = LEDataStore( root=self.rootDir_, directory=self.dir_ )
       
       self.assertEqual( ds2.fetchLifeExpectancy( self.le2_ ), self.le2_.lifeExpectancy() )
 

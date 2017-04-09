@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from LEUtils import LifeExpectancy, Person
 from LECache import LECache
-from LEBackEnd import LEDataStorage
+from LEDataStore import LEDataStore
 
 import requests
 import sys
@@ -55,9 +55,11 @@ def getRemainingLifeExpectancyFromWPA( lifeExp ):
       return ( False, "Can't connect to the Internet" )
 
    if not resp.ok:
-      return ( False, resp.json[ 'detail' ] )
+      return ( False, resp.json()[ 'detail' ] )
 
-   return ( True, resp.json[ 'remaining_life_expectancy' ] )
+   import pdb
+   pdb.set_trace()
+   return ( True, resp.json()[ 'remaining_life_expectancy' ] )
 
 def getTotalLifeExpectancyFromWPA( lifeExp ):
    '''
@@ -74,9 +76,9 @@ def getTotalLifeExpectancyFromWPA( lifeExp ):
       # no connection to the internet
       return ( False, "Can't connect to the Internet" )
    if not resp.ok:
-      return ( False, resp.json[ 'detail' ] )
+      return ( False, resp.json()[ 'detail' ] )
 
-   return ( True, resp.json[ 'total_life_expectancy' ] )
+   return ( True, resp.json()[ 'total_life_expectancy' ] )
 
 def getCountriesFromWPA():
 
@@ -88,7 +90,7 @@ def getCountriesFromWPA():
       return []
    if not resp.ok:
       return []
-   return resp.json[ 'countries' ]
+   return resp.json()[ 'countries' ]
 
 def checkCountry( country, countries ):
    '''
@@ -128,7 +130,7 @@ def lifeExpectancy():
    # create a cache of 10 elements
    cache = LECache( 10 )
    # create a backend data storage system
-   dataStorage = LEDataStorage()
+   dataStorage = LEDataStore()
 
    while True:
       # parse user input

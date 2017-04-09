@@ -6,10 +6,10 @@ import tempfile
 
 from LEUtils import isDate
 
-class LEDataStorageException( Exception ):
+class LEDataStoreException( Exception ):
    pass
 
-class LEDataStorage( object ):
+class LEDataStore( object ):
    '''
    Builds a hierarchy of files starting from root + dir
    These LifeExpectancy members are used for hierarchy:
@@ -25,7 +25,7 @@ class LEDataStorage( object ):
    def __init__( self, root=tempfile.gettempdir(), directory='lifeExpectancy' ):
 
       if not os.path.exists( root ):
-         raise LEDataStorageException( "Directory %s does not exist, "
+         raise LEDataStoreException( "Directory %s does not exist, "
             " pick an existing root directory" )
       self.root_ = os.path.abspath( root )
       self.dir_ = os.path.join( root, directory ) 
@@ -72,7 +72,7 @@ class LEDataStorage( object ):
       # if life expectancy isnt set in lifeExp,
       # do not store anything
       if not lifeExp.lifeExpectancy():
-         raise LEDataStorageException( "life expectancy in %s is not set" % lifeExp )
+         raise LEDataStoreException( "life expectancy in %s is not set" % lifeExp )
 
       lifeExpPath = self._lifeExpPath( lifeExp )
       if not os.path.exists( lifeExpPath ):
