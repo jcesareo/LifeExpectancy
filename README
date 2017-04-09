@@ -1,0 +1,23 @@
+********************
+Life Expectancy App
+********************
+
+This is a simple Life Expectancy app that uses the World Population APIs found at http://api.population.io/ to calculate the life expectancy of a user.
+The program needs the following information to get  the life expectancy from a user:
+
+Name:
+Country:
+Date of Birth:
+Gender:
+
+If the information provided is in the correct format, it provides the following output:
+
+<name>'s Life Expectancy: <days> days, <weeks> weeks, <months> months, and <years> years left\n" % 
+
+
+1. LifeExpectancy.py
+
+
+Input:
+
+Name:

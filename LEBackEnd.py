@@ -11,12 +11,14 @@ class LEDataStorageException( Exception ):
 class LEDataStorage( object ):
    '''
    Builds a hierarchy of files starting from root + dir
-   Each country has its own subfolder in rootdir/
-   Each year has a subfolder in rootdir/country/
-   Each month has a folder in folder in rootdir/country/year/
-   Each day has a folder in folder rootdir/country/year/month/
-   Each gender has a file in folder rootdir/country/year/month/day/
-   The file has the life expectancy float number
+   These LifeExpectancy members are used for hierarchy:
+   - date
+   - country
+   - date of birth
+   Lastly the gender stores the life expectancy in json format
+
+   The hierarchy for a a path to a file is:
+   /rootdir/date.year/date.month/date.day/country/dob.year/dob.month/dob.day/
    '''
 
    def __init__( self, root=tempfile.gettempdir(), directory='lifeExpectancy' ):

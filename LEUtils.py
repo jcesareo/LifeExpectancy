@@ -8,7 +8,7 @@ class LifeExpectancyException( Exception ):
 
 def isDate( d ):
    '''
-   Verifies d can be turned into a date,
+   Helper method. Verifies d can be turned into a date,
    returns tuple with verification boolean + date/string
    '''
    
@@ -44,28 +44,8 @@ class Age( object ):
       self.m_ = months if months > 0 else 0
       self.d_ = days if days > 0 else 0
 
-   def json( self ):
-      return { 'years' : self.y_,
-               'months': self.m_,
-               'days': self.d_ }
-
-   def years( self ):
-      return self.y_
-   def months( self ):
-      return self.m_
-   def days( self ):
-      return self.d_
-
-   def zero( self ):
-      return ( self.y_ == 0 and self.m_ == 0 and self.d_ == 0 )
    def __str__( self ):
       return "%sy%sm%sd" % ( self.y_, self.m_, self.d_ )
-
-   def __eq__( self, o ):
-      if not isinstance( o, self.__class_ ):
-         return False
-      return ( o.years() == self.years_ and o.months() == self.months_
-               and o.days() == self.days_ )
 
 class LifeExpectancy( object ):
 

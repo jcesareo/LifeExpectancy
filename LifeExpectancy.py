@@ -11,18 +11,19 @@ import datetime
 banner = """
 ********************************************
 *****      Life Expectancy App         *****
-Given your date of birth, country and gender
-it calculates your life expectancy using
-data from the World Population API:
-http://api.population.io
+The Life Expectancy App calculates your life 
+expectancy according to the World Population 
+API: http://api.population.io
+based on date of birth, country of origin
+and gender.
 ********************************************
 """
 
 def lifeExpectancyInput():
-   name = raw_input( "Enter your name: " )
-   country = raw_input( "What country are you from? " )
-   dob = raw_input( "What is your date of birth? (YYYY-MM-DD) " )
-   gender = raw_input( "What is your gender? [Male|Female] " )
+   name = raw_input( "Name: " )
+   country = raw_input( "Country: " )
+   dob = raw_input( "Date of Birth: (YYYY-MM-DD) " )
+   gender = raw_input( "Gender: (Male|Female) " )
 
    try:
       le = LifeExpectancy( country, dob, gender, datetime.date.today() )
@@ -33,10 +34,8 @@ def lifeExpectancyInput():
 
 def lifeExpectancyOutput( name, delta ):
 
-   print ( "\n%s's Life Expectancy:\nDays remaining: %s\nWeeks remaining: %s\n"
-           "Months remaining: %s\nYears remaining: %s" %
-           ( name, delta.days % 7, delta.days / 7, delta.months,
-             delta.years ) )
+   print ( "\n%s's Life Expectancy: %s years, %s months, %s weeks and %s days left" % 
+           ( name, delta.years, delta.months, delta.days / 7, delta.days % 7 ) )
 
 
 def getRemainingLifeExpectancyFromWPA( lifeExp ):
