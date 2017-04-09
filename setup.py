@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 
-with open('README.rst') as f:
+with open('README') as f:
     readme = f.read()
 
 
@@ -17,4 +17,3 @@ setup(
     url='https://github.com/jcesareo/LifeExpectancy',
     packages=find_packages(exclude=('tests'))
 )
-

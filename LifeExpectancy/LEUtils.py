@@ -69,7 +69,6 @@ class LifeExpectancy( object ):
       if date:
          self.setDate( date )
 
-
    def country( self ):
       return self.country_
 

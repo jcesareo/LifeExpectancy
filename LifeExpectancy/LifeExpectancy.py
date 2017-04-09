@@ -34,7 +34,7 @@ def lifeExpectancyInput():
 
 def lifeExpectancyOutput( name, delta ):
 
-   print ( "\n%s's Life Expectancy: %s years, %s months, %s weeks and %s days left" % 
+   print ( "\n%s's life expectancy is: %s years, %s months, %s weeks and %s days" % 
            ( name, delta.years, delta.months, delta.days / 7, delta.days % 7 ) )
 
 
@@ -91,7 +91,12 @@ def getCountriesFromWPA():
    return resp.json[ 'countries' ]
 
 def checkCountry( country, countries ):
-
+   '''
+   Helper method checks if country is in the cached list of countries.
+   Prompts user to print the list of countries if the country passed
+   doesn't exist.
+   '''
+   
    if country in countries:
       return True
 
@@ -102,58 +107,70 @@ def checkCountry( country, countries ):
       print ",".join( countries )
    return False
 
-def askContinue():
-   cont = raw_input( "\nTry again? [yes|No] " )
-   if not cont.lower().startswith( 'y' ):
-      return False
-   return True
+def exit():
+   '''
+   Helper method. Asks user to continue using the App 
+   after having retrieved information for a single user
+   '''
+
+   exit = raw_input( "\nExit? [yes|No] " )
+   if exit.lower().startswith( 'y' ):
+      return True
+   return False
 
 def lifeExpectancy():
 
+   global banner
    print banner
+
+   # preemptively get countries from WPA
    countries = getCountriesFromWPA()
+   # create a cache of 10 elements
    cache = LECache( 10 )
+   # create a backend data storage system
    dataStorage = LEDataStorage()
 
    while True:
+      # parse user input
       ( v, p ) = lifeExpectancyInput()
       if not v:
          print p
-         if not askContinue():
+         if exit():
             sys.exit( 0 )
          continue
 
-      # check the country, allow user to print list of countries
+      # check the country, if invalid allow user to print list of countries
       if not checkCountry( p.lifeExp().country(), countries ):
-         if not askContinue():
+         if exit():
             sys.exit( 0 )
          continue
 
-      # input is valid, let's fulfill the request
+      # input is valid, fulfill request
 
       # first check in the cache
       cached = cache.get( p.lifeExp() )
       if cached:
          lifeExpectancyOutput( p.name(), cached.lifeExpectancy() )
-         if not askContinue():
+         if exit():
             sys.exit( 0 )
          continue
 
-      # otherwise check in the data storage for the lifeExp
+      # check the data storage
       delta = dataStorage.fetchLifeExpectancy( p.lifeExp() )
       if delta:
          p.lifeExp().setLifeExp( delta )
          lifeExpectancyOutput( p.name(), p.lifeExp().lifeExpectancy() )
-         if not askContinue():
+         if exit():
             sys.exit( 0 )
          # store the latest query in the cache
          cache.put( p.lifeExp() )
          continue
 
-      # if we don't have it anywhere, get the life expectancy from the web
+      # if we don't have the life expectancy query locally
+      # get the life expectancy from the web
       # there are 2 cases:
       # 1) the dob is in the future, calculate an expected life expectancy
-      #    using total life expectancy API
+      #    using the total life expectancy API
       # 2) the dob is in the past, calculate the expected life expectancy
       #    using the remaining life expectancy API
 
@@ -167,15 +184,18 @@ def lifeExpectancy():
          
       if not v:
          print lifeExpFloat
-         if not askContinue():
+         if exit():
             sys.exit( 0 )
          continue
 
+      # takes the float value retrieved from WPA and
+      # calculates the life expectancy
       p.lifeExp().calculateLifeExp( lifeExpFloat )
+      # prints the life expectancy to the user
       lifeExpectancyOutput( p.name(), p.lifeExp().lifeExpectancy() )
-      if not askContinue():
+      if exit():
          sys.exit( 0 )
-      # add the lifeExp we calculated to both the cache and the dataStorage
+      # add the life expectancy calculation to both the cache and the dataStorage
       cache.put( p.lifeExp() )
       dataStorage.addLifeExpectancy( p.lifeExp() )
 
