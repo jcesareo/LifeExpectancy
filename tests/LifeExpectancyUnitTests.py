@@ -37,7 +37,7 @@ class LifeExpectancyTest( unittest.TestCase ):
 
       # dob is a string in the wrong format
       with self.assertRaisesRegexp( LifeExpectancyException,
-                                    "date.* has to be in format" ):
+                                    "date is invalid" ):
          le = LifeExpectancy( self.country, "1331-33-33", 'male', 'foo' )
 
       # dob is a not the right type
@@ -58,7 +58,7 @@ class LifeExpectancyTest( unittest.TestCase ):
 
       # date is a string in the wrong format
       with self.assertRaisesRegexp( LifeExpectancyException,
-                                    "date.* has to be in format" ):
+                                    "date is invalid" ):
          le = LifeExpectancy( self.country, self.dob1, 'female', "1331-33-33" )
 
       le = LifeExpectancy( self.country, self.dob1, self.gender, self.today_ )

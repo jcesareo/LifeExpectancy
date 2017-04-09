@@ -18,8 +18,7 @@ def isDate( d ):
          d = datetime.datetime.strptime( d, '%Y-%m-%d' )
          d = datetime.date( d.year, d.month, d.day )
       except Exception:
-         return ( False, "date has to be in format "
-            "YYYY-MM-DD" )
+         return ( False, "date is invalid" )
    elif not isinstance( d, datetime.date ):
       return ( False, "date %s is incorrect type %s"
                % ( d, d.__class__ ) )

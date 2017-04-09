@@ -56,9 +56,6 @@ def getRemainingLifeExpectancyFromWPA( lifeExp ):
 
    if not resp.ok:
       return ( False, resp.json()[ 'detail' ] )
-
-   import pdb
-   pdb.set_trace()
    return ( True, resp.json()[ 'remaining_life_expectancy' ] )
 
 def getTotalLifeExpectancyFromWPA( lifeExp ):
