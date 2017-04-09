@@ -5,9 +5,9 @@ import tempfile
 import unittest
 import datetime
 import context
-from LEUtils import LifeExpectancy, LifeExpectancyException
-from LECache import LECache
-from LEBackEnd import LEDataStorage, LEDataStorageException
+from LifeExpectancy.LEUtils import LifeExpectancy, LifeExpectancyException
+from LifeExpectancy.LECache import LECache
+from LifeExpectancy.LEBackEnd import LEDataStorage, LEDataStorageException
 
 import datetime
 from dateutil.relativedelta import relativedelta as relativedelta
